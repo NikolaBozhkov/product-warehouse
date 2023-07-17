@@ -5,7 +5,18 @@
   "main": "index.js",
   "scripts": {
     "compile": "tsc && cp .env ./build/.env && cp -r ./src/sql ./build",
-    "start": "npm run compile && node ./build/index.js"
+    "build": "nest build",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node dist/main",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "keywords": [],
   "author": "",
@@ -13,7 +24,13 @@
   "type": "module",
   "dependencies": {
     "@apollo/server": "^4.7.5",
+    "@nestjs/apollo": "^12.0.7",
+    "@nestjs/graphql": "^12.0.8",
+    "@nestjs/platform-express": "^10.1.0",
+    "@nestjs/typeorm": "^10.0.0",
     "body-parser": "^1.20.2",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
@@ -21,11 +38,13 @@
     "graphql": "^16.7.1",
     "pg": "^8.11.1",
     "pg-hstore": "^2.3.4",
-    "semver": "^7.5.4"
+    "semver": "^7.5.4",
+    "typeorm": "^0.3.17"
   },
   "devDependencies": {
     "@types/node": "^20.4.2",
     "@types/pg": "^8.10.2",
+    "source-map-support": "^0.5.21",
     "typescript": "^5.1.6"
   }
 }

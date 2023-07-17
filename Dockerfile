@@ -7,7 +7,7 @@ USER node
 
 COPY ./package.json ./package-lock.json ./tsconfig.json src ./
 
-RUN npm install && npm run compile
+RUN npm install && npm run build
 
 FROM node:14-alpine
 
@@ -20,7 +20,7 @@ ENV DB_USER=postgres \
     DB_PORT=5432
 
 EXPOSE 8080
-ENTRYPOINT ["node", "build/index"]
+ENTRYPOINT ["node", "dist/main"]
 
 COPY --from=build-env /app/node_modules ./node_modules
-COPY --from=build-env /app/build ./build
+COPY --from=build-env /app/dist ./dist

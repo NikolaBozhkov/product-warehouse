@@ -1,14 +1,18 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+import { Injectable } from '@nestjs/common';
 import path from 'path';
-
 import pg from 'pg';
 import fs from 'fs';
 import semver from 'semver';
-
-@Injectable()
-export class DbClient implements OnModuleInit {
-    pool: pg.Pool;
-
+export let DbClient = class DbClient {
     constructor() {
         this.pool = new pg.Pool({
             user: process.env.DB_USER,
@@ -18,7 +22,6 @@ export class DbClient implements OnModuleInit {
             port: +process.env.DB_PORT,
         });
     }
-
     async onModuleInit() {
         try {
             await this.initDb();
@@ -28,8 +31,7 @@ export class DbClient implements OnModuleInit {
             process.exit(1);
         }
     }
-
-    async query(query: string, values?: any[]): Promise<pg.QueryResult<any>> {
+    async query(query, values) {
         try {
             return await this.pool.query(query, values);
         }
@@ -37,11 +39,9 @@ export class DbClient implements OnModuleInit {
             throw error;
         }
     }
-
     async initDb() {
         const client = await this.pool.connect();
         const schemaVersionExists = await this.doesTableExist('schema_version');
-
         if (!schemaVersionExists) {
             await client.query(`
               CREATE TABLE schema_version (
@@ -50,41 +50,35 @@ export class DbClient implements OnModuleInit {
               )
             `);
         }
-
         const currentVersion = await this.getCurrentVersion();
         const newVersion = '1.0.0';
-
         if (!currentVersion || semver.gt(newVersion, currentVersion)) {
             console.log('init db...');
-
             try {
                 await client.query('BEGIN');
-
                 const schemaFile = fs.readFileSync(path.resolve(__dirname, './sql/schema.sql')).toString();
                 await client.query(schemaFile);
-
                 const dataFile = fs.readFileSync(path.resolve(__dirname, './sql/data.sql')).toString();
                 await client.query(dataFile);
-
                 await client.query('INSERT INTO schema_version (version) VALUES ($1)', [newVersion]);
                 await client.query('COMMIT');
-
                 console.log('db init complete.');
-            } catch (error) {
+            }
+            catch (error) {
                 await client.query('ROLLBACK');
                 throw error;
-            } finally {
+            }
+            finally {
                 client.release();
             }
         }
     }
-
-    private async getCurrentVersion() {
+    async getCurrentVersion() {
         const result = await this.query('SELECT version FROM schema_version ORDER BY id DESC LIMIT 1');
         return result.rows[0] ? result.rows[0].version : null;
-    };
-
-    private async doesTableExist(tableName) {
+    }
+    ;
+    async doesTableExist(tableName) {
         const result = await this.query(`
           SELECT EXISTS (
             SELECT 1
@@ -93,5 +87,11 @@ export class DbClient implements OnModuleInit {
           )
         `, [tableName]);
         return result.rows[0].exists;
-    };
-}
+    }
+    ;
+};
+DbClient = __decorate([
+    Injectable(),
+    __metadata("design:paramtypes", [])
+], DbClient);
+//# sourceMappingURL=db.js.map

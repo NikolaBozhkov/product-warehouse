@@ -1,18 +1,21 @@
 {
     "compilerOptions": {
-        "rootDirs": [
-            "src"
-        ],
-        "outDir": "build",
-        "lib": [
-            "es2020"
-        ],
-        "target": "es2020",
-        "module": "esnext",
-        "moduleResolution": "NodeNext",
-        "esModuleInterop": true,
-        "types": [
-            "node"
-        ]
+      "module": "NodeNext",
+      "declaration": true,
+      "removeComments": true,
+      "emitDecoratorMetadata": true,
+      "experimentalDecorators": true,
+      "allowSyntheticDefaultImports": true,
+      "target": "ES2021",
+      "sourceMap": true,
+      "outDir": "./dist",
+      "baseUrl": "./",
+      "incremental": true,
+      "skipLibCheck": true,
+      "strictNullChecks": false,
+      "noImplicitAny": false,
+      "strictBindCallApply": false,
+      "forceConsistentCasingInFileNames": false,
+      "noFallthroughCasesInSwitch": false
     }
-}
+  }
