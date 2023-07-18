@@ -1,28 +1,26 @@
 import { Injectable } from '@nestjs/common';
 import { DbClient } from '../db.js';
 import { WarehouseProduct } from './models/warehouse-product.model.js';
-import { WarehouseEntity } from 'src/warehouses/models/warehouse.entity.js';
-import { HazardousState } from 'src/warehouses/models/hazardous-state.js';
 
 @Injectable()
 export class WarehouseProductsService {
     constructor(private readonly dbClient: DbClient) { }
 
-    async getWarehouseProducts(): Promise<WarehouseProduct[]> {
-        const result = await this.dbClient.query('SELECT product_id AS "productId", warehouse_id AS "warehouseId", amount FROM product_warehouses');
+    async getWarehouseProducts() {
+        const result = await this.dbClient.query<WarehouseProduct>('SELECT product_id AS "productId", warehouse_id AS "warehouseId", amount FROM product_warehouses');
         return result.rows;
     }
 
-    async getProductsByWarehouseId(warehouseId: number): Promise<WarehouseProduct[]> {
-        const result = await this.dbClient.query(`
+    async getProductsByWarehouseId(warehouseId: number) {
+        const result = await this.dbClient.query<WarehouseProduct>(`
         SELECT product_id AS "productId", warehouse_id AS "warehouseId", amount FROM product_warehouses
         WHERE warehouse_id = $1`,
             [warehouseId]);
         return result.rows;
     }
 
-    async getProductsCountPerWarehouseContainingProduct(productId: number): Promise<{ warehouseId: number, productsCount: number }[]> {
-        const result = await this.dbClient.query(`
+    async getProductsCountPerWarehouseContainingProduct(productId: number) {
+        const result = await this.dbClient.query<{ warehouseId: number, productsCount: number }>(`
         SELECT id as "warehouseId", "productsCount" FROM (
             SELECT id, COUNT(pw.product_id)::int AS "productsCount" FROM warehouses w
             INNER JOIN product_warehouses pw

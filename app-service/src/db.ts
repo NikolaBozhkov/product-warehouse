@@ -32,9 +32,9 @@ export class DbClient implements OnModuleInit {
         }
     }
 
-    async query(query: string, values?: any[]): Promise<pg.QueryResult<any>> {
+    async query<T>(query: string, values?: any[]): Promise<pg.QueryResult<T>> {
         try {
-            return await this.pool.query(query, values);
+            return await this.pool.query<T>(query, values);
         }
         catch (error) {
             throw error;
@@ -83,12 +83,12 @@ export class DbClient implements OnModuleInit {
     }
 
     private async getCurrentVersion() {
-        const result = await this.query('SELECT version FROM schema_version ORDER BY id DESC LIMIT 1');
+        const result = await this.query<any>('SELECT version FROM schema_version ORDER BY id DESC LIMIT 1');
         return result.rows[0] ? result.rows[0].version : null;
     };
 
     private async doesTableExist(tableName) {
-        const result = await this.query(`
+        const result = await this.query<any>(`
           SELECT EXISTS (
             SELECT 1
             FROM information_schema.tables

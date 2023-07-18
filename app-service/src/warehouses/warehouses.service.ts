@@ -9,12 +9,12 @@ export class WarehousesService {
     constructor(private readonly dbClient: DbClient) { }
 
     async getWarehouses(): Promise<WarehouseEntity[]> {
-        const result = await this.dbClient.query('SELECT id, size, hazardous_state AS "hazardousState" FROM warehouses');
+        const result = await this.dbClient.query<WarehouseEntity>('SELECT id, size, hazardous_state AS "hazardousState" FROM warehouses');
         return result.rows;
     }
 
     async getWarehouse(id: number): Promise<WarehouseEntity> {
-        const result = await this.dbClient.query('SELECT id, size, hazardous_state AS "hazardousState" FROM warehouses WHERE id = $1', [id]);
+        const result = await this.dbClient.query<WarehouseEntity>('SELECT id, size, hazardous_state AS "hazardousState" FROM warehouses WHERE id = $1', [id]);
         return result.rows[0];
     }
 

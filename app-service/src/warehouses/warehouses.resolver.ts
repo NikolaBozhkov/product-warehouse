@@ -1,5 +1,5 @@
-import { HttpException, NotFoundException, BadRequestException } from '@nestjs/common';
-import { Query, ResolveField, Resolver, Parent, Int, Mutation, Args, ID, FIELD_RESOLVER_MIDDLEWARE_METADATA } from '@nestjs/graphql';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { Query, ResolveField, Resolver, Parent, Int, Mutation, Args, ID } from '@nestjs/graphql';
 import { Warehouse } from './models/warehouse.model.js';
 import { WarehousesService } from './warehouses.service.js';
 import { WarehouseProductsService } from '../warehouse-products/warehouse-products.service.js';
@@ -10,6 +10,8 @@ import { ImportProductInput } from './inputs/ImportProductInput.js';
 import { ProductsService } from '../products/products.service.js';
 import { WarehouseEntity } from './models/warehouse.entity.js';
 import { HazardousState } from './models/hazardous-state.js';
+import { LogisticsHistoryService } from '../logistics-history/logistics-history.service.js';
+import { LogisticsType } from '../logistics-history/models/logistics-type.js';
 
 @Resolver(of => Warehouse)
 export class WarehousesResolver {
@@ -18,6 +20,7 @@ export class WarehousesResolver {
         private readonly warehouseProductsService: WarehouseProductsService,
         private readonly calculationsService: CalculationsService,
         private readonly productsService: ProductsService,
+        private readonly logisticsHistoryService: LogisticsHistoryService,
     ) {
     }
 
@@ -99,7 +102,11 @@ export class WarehousesResolver {
             throw new BadRequestException(`The target warehouse doesn't have enough free space. Required: ${requiredSpace}, Available: ${freeSpace}`);
         }
 
-        return this.warehousesService.import(toId, products, fromId);
+        const importedProducts = await this.warehousesService.import(toId, products, fromId);
+
+        await this.logisticsHistoryService.recordOperation(warehouseTarget.id, LogisticsType.Import, products);
+
+        return importedProducts;
     }
 
     @Mutation(() => [WarehouseProduct])
@@ -130,6 +137,8 @@ export class WarehousesResolver {
         if (productsLeft.length === 0) {
             await this.warehousesService.updateHazardousState(HazardousState.Neutral, [fromId]);
         }
+
+        await this.logisticsHistoryService.recordOperation(fromId, LogisticsType.Export, products);
 
         return stockLeft;
     }

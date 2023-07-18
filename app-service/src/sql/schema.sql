@@ -22,3 +22,20 @@ CREATE TABLE product_warehouses (
 
     PRIMARY KEY ("product_id", "warehouse_id")
 );
+
+CREATE TYPE logistics_type AS ENUM ('import', 'export');
+
+CREATE TABLE warehouses_logistics_history (
+    "id" SERIAL PRIMARY KEY,
+    "warehouse_id" INT REFERENCES warehouses ("id"),
+    "date" DATE NOT NULL DEFAULT NOW(),
+    "type" logistics_type NOT NULL
+);
+
+CREATE TABLE logistics_records_products (
+    "logistics_record_id" INT REFERENCES warehouses_logistics_history ("id"),
+    "product_id" INT REFERENCES products ("id"),
+    "amount" INT NOT NULL,
+
+    PRIMARY KEY ("logistics_record_id", "product_id")
+);

@@ -11,13 +11,13 @@ export class ProductsService {
 
     }
 
-    async getProducts(): Promise<Product[]> {
-        const result = await this.dbClient.query('SELECT id, name, is_hazardous AS "isHazardous", size_per_unit AS "sizePerUnit" FROM products');
+    async getProducts() {
+        const result = await this.dbClient.query<Product>('SELECT id, name, is_hazardous AS "isHazardous", size_per_unit AS "sizePerUnit" FROM products');
         return result.rows;
     }
 
-    async createProduct(name: string, isHazardous: boolean, sizePerUnit: number): Promise<Product> {
-        const result = await this.dbClient.query(`
+    async createProduct(name: string, isHazardous: boolean, sizePerUnit: number) {
+        const result = await this.dbClient.query<Product>(`
         INSERT INTO products (name, is_hazardous, size_per_unit)
         VALUES ($1, $2, $3)
         RETURNING id, name, is_hazardous AS "isHazardous", size_per_unit AS "sizePerUnit"`,
@@ -43,7 +43,7 @@ export class ProductsService {
 
         const values = updates.map(u => Object.values(u)[0]).concat([id]);
 
-        const result = await this.dbClient.query(`
+        const result = await this.dbClient.query<Product>(`
         UPDATE products
         SET ${setQuery}
         WHERE id = $${values.length}
@@ -54,7 +54,7 @@ export class ProductsService {
     }
 
     async deleteProduct(id: number): Promise<Product> {
-        const result = await this.dbClient.query(`
+        const result = await this.dbClient.query<Product>(`
         DELETE FROM products
         WHERE id = $1
         RETURNING id, name, is_hazardous AS "isHazardous", size_per_unit AS "sizePerUnit"`,
@@ -64,7 +64,7 @@ export class ProductsService {
     }
 
     async getProductsByIds(ids: number[]): Promise<Product[]> {
-        const result = await this.dbClient.query(`
+        const result = await this.dbClient.query<Product>(`
         SELECT id, name, is_hazardous AS "isHazardous", size_per_unit AS "sizePerUnit" FROM products
         WHERE id IN (${ids.map((_, i) => `$${i + 1}`).join(',')})`,
             ids);

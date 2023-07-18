@@ -6,6 +6,7 @@ import { WarehouseProductsService } from '../warehouse-products/warehouse-produc
 import { CalculationsService } from '../calculations/calculations.service.js';
 import { HttpModule } from '@nestjs/axios';
 import { ProductsService } from '../products/products.service.js';
+import { LogisticsHistoryService } from '../logistics-history/logistics-history.service.js';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ProductsService } from '../products/products.service.js';
     DbClient,
     CalculationsService,
     ProductsService,
+    LogisticsHistoryService,
   ]
 })
 export class WarehousesModule {}
