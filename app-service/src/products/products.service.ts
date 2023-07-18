@@ -1,10 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { DbClient } from '../db.js';
 import { Product } from './models/product.model.js';
+import { WarehouseProductsService } from 'src/warehouse-products/warehouse-products.service.js';
 
 @Injectable()
 export class ProductsService {
-    constructor(private readonly dbClient: DbClient) {}
+    constructor(
+        private readonly dbClient: DbClient,
+    ) {
+
+    }
 
     async getProducts(): Promise<Product[]> {
         const result = await this.dbClient.query('SELECT id, name, is_hazardous AS "isHazardous", size_per_unit AS "sizePerUnit" FROM products');
@@ -26,6 +31,10 @@ export class ProductsService {
             { is_hazardous: isHazardous },
             { size_per_unit: sizePerUnit },
         ].filter(u => Object.values(u).every(v => v !== undefined));
+
+        if (updates.length === 0) {
+            return;
+        }
 
         const setQuery = updates.reduce<string>((result, current, i) => {
             result += `${i !== 0 ? ',' : ''}${Object.keys(current)[0]} = $${i + 1}`;

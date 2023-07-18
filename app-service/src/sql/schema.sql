@@ -7,9 +7,12 @@ CREATE TABLE products (
     "size_per_unit" INT NOT NULL
 );
 
+CREATE TYPE hazardous_state AS ENUM ('neutral', 'non-hazardous', 'hazardous');
+
 CREATE TABLE warehouses (
     "id" SERIAL PRIMARY KEY,
-    "size" BIGINT NOT NULL
+    "size" BIGINT NOT NULL,
+    "hazardous_state" hazardous_state NOT NULL
 );
 
 CREATE TABLE product_warehouses (

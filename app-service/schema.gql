@@ -24,6 +24,7 @@ type Warehouse {
   warehouseProducts: [WarehouseProduct!]!
   stockAmount: Int!
   freeSpace: Int!
+  hazardousState: String!
 }
 
 type Query {
