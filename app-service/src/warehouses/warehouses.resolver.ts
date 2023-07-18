@@ -54,9 +54,9 @@ export class WarehousesResolver {
 
     @Mutation(() => [WarehouseProduct])
     async import(
-        @Args('toId', { type: () => ID }) toId: number,
+        @Args('toId', { type: () => Int }) toId: number,
         @Args('products', { type: () => [ImportProductInput] }) products: ImportProductInput[],
-        @Args('fromId', { type: () => ID, nullable: true }) fromId?: number,
+        @Args('fromId', { type: () => Int, nullable: true }) fromId?: number,
     ) {
         if (products.length === 0) {
             throw new BadRequestException('No products provided.');
@@ -113,7 +113,7 @@ export class WarehousesResolver {
     async export(
         @Args('fromId', { type: () => Int }) fromId: number,
         @Args('products', { type: () => [ImportProductInput] }) products: ImportProductInput[],
-        @Args('toId', { type: () => ID, nullable: true }) toId?: number,
+        @Args('toId', { type: () => Int, nullable: true }) toId?: number,
     ) {
         const _ = await this.getValidatedWarehouse(fromId);
 

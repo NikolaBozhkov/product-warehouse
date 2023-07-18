@@ -5,6 +5,7 @@ import { DbClient } from './db.js';
 import { ProductsModule } from './products/products.module.js';
 import { WarehousesModule } from './warehouses/warehouses.module.js';
 import { WarehouseProductsModule } from './warehouse-products/warehouse-products.module.js';
+import { LogisticsHistoryModule } from './logistics-history/logistics-history.module.js';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { WarehouseProductsModule } from './warehouse-products/warehouse-products
     WarehousesModule,
     ProductsModule,
     WarehouseProductsModule,
+    LogisticsHistoryModule,
   ],
   providers: [DbClient],
 })

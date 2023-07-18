@@ -27,15 +27,35 @@ type Warehouse {
   hazardousState: String!
 }
 
+type LogisticsRecordProduct {
+  productId: Int!
+  amount: Int!
+}
+
+"""logistics-history-record"""
+type LogisticsHistoryRecord {
+  id: Int!
+  warehouseId: Int!
+  date: DateTime!
+  type: String!
+  products: [LogisticsRecordProduct!]!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
 type Query {
   warehouses: [Warehouse!]!
   combinedStockAmount: Int!
   products: [Product!]!
+  logisticsHistory(warehouseId: Int, date: DateTime, type: String): [LogisticsHistoryRecord!]!
 }
 
 type Mutation {
-  import(toId: ID!, products: [ImportProductInput!]!, fromId: ID): [WarehouseProduct!]!
-  export(fromId: Int!, products: [ImportProductInput!]!, toId: ID): [WarehouseProduct!]!
+  import(toId: Int!, products: [ImportProductInput!]!, fromId: Int): [WarehouseProduct!]!
+  export(fromId: Int!, products: [ImportProductInput!]!, toId: Int): [WarehouseProduct!]!
   createProduct(name: String!, isHazardous: Boolean!, sizePerUnit: Int!): Product!
   updateProduct(id: ID!, name: String, isHazardous: Boolean, sizePerUnit: Int): Product!
   deleteProduct(id: ID!): Product!
