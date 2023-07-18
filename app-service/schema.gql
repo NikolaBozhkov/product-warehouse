@@ -1,0 +1,45 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+"""product"""
+type Product {
+  id: ID!
+  name: String!
+  isHazardous: Boolean!
+  sizePerUnit: Int!
+}
+
+"""warehouse-product"""
+type WarehouseProduct {
+  productId: ID!
+  warehouseId: ID!
+  amount: Int!
+}
+
+"""warehouse"""
+type Warehouse {
+  id: ID!
+  size: Int!
+  warehouseProducts: [WarehouseProduct!]!
+  stockAmount: Int!
+  freeSpace: Int!
+}
+
+type Query {
+  warehouses: [Warehouse!]!
+  combinedStockAmount: Int!
+  products: [Product!]!
+}
+
+type Mutation {
+  import(toId: ID!, products: [ImportProductInput!]!, fromId: ID): [WarehouseProduct!]!
+  createProduct(name: String!, isHazardous: Boolean!, sizePerUnit: Int!): Product!
+  updateProduct(id: ID!, name: String, isHazardous: Boolean, sizePerUnit: Int): Product!
+  deleteProduct(id: ID!): Product!
+}
+
+input ImportProductInput {
+  productId: ID!
+  amount: Int!
+}
