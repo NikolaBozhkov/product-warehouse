@@ -1,13 +1,14 @@
 import { HttpException, NotFoundException, BadRequestException } from '@nestjs/common';
-import { Query, ResolveField, Resolver, Parent, Int, Mutation, Args, ID } from '@nestjs/graphql';
+import { Query, ResolveField, Resolver, Parent, Int, Mutation, Args, ID, FIELD_RESOLVER_MIDDLEWARE_METADATA } from '@nestjs/graphql';
 import { Warehouse } from './models/warehouse.model.js';
 import { WarehousesService } from './warehouses.service.js';
 import { WarehouseProductsService } from '../warehouse-products/warehouse-products.service.js';
-import { CalculationsService } from '../calculations.service.js';
+import { CalculationsService } from '../calculations/calculations.service.js';
 import { firstValueFrom } from 'rxjs';
 import { WarehouseProduct } from '../warehouse-products/models/warehouse-product.model.js';
 import { ImportProductInput } from './inputs/ImportProductInput.js';
 import { ProductsService } from '../products/products.service.js';
+import { WarehouseEntity } from './models/warehouse.entity.js';
 
 @Resolver(of => Warehouse)
 export class WarehousesResolver {
@@ -49,14 +50,11 @@ export class WarehousesResolver {
 
     @Mutation(() => [WarehouseProduct])
     async import(
-        @Args('toId', { type: () => ID }) toId: string,
+        @Args('toId', { type: () => ID }) toId: number,
         @Args('products', { type: () => [ImportProductInput] }) products: ImportProductInput[],
-        @Args('fromId', { type: () => ID, nullable: true }) fromId?: string,
+        @Args('fromId', { type: () => ID, nullable: true }) fromId?: number,
     ) {
-        const warehouseTarget = await this.warehousesService.getWarehouse(toId);
-        if (!warehouseTarget) {
-            throw new NotFoundException(`Warehouse with id ${toId} not found.`);
-        }
+        const warehouseTarget = await this.getValidatedWarehouse(toId);
 
         const productsMap = products.reduce<Record<string, ImportProductInput>>((map, product) => {
             map[product.productId] = product;
@@ -78,9 +76,41 @@ export class WarehousesResolver {
             throw new BadRequestException(`The target warehouse doesn't have enough free space. Required: ${requiredSpace}, Available: ${freeSpace}`);
         }
 
-
-
         return this.warehousesService.import(toId, products, fromId);
     }
 
+    @Mutation(() => [WarehouseProduct])
+    async export(
+        @Args('fromId', { type: () => Int }) fromId: number,
+        @Args('products', { type: () => [ImportProductInput] }) products: ImportProductInput[],
+        @Args('toId', { type: () => ID, nullable: true }) toId?: number,
+    ) {
+        const _ = await this.getValidatedWarehouse(fromId);
+
+        // Validate product availability
+        const warehouseProducts = await this.warehouseProductsService.getProductsByWarehouseId(fromId);
+        for (let product of products) {
+            const warehouseProduct = warehouseProducts.find(p => p.productId === product.productId);
+            if (warehouseProduct === undefined) {
+                throw new NotFoundException(
+                    `Product with id ${product.productId} is not available in warehouse with id ${fromId}`);
+            }
+
+            if (product.amount > warehouseProduct.amount) {
+                throw new BadRequestException(
+                    `Not enough stock for product with id ${product.productId}. Requested: ${product.amount}, Available: ${warehouseProduct.amount}`);
+            }
+        }
+
+        return this.warehousesService.export(fromId, products, toId);
+    }
+
+    private async getValidatedWarehouse(id: number): Promise<WarehouseEntity> {
+        const warehouse = await this.warehousesService.getWarehouse(id);
+        if (!warehouse) {
+            throw new NotFoundException(`Warehouse with id ${id} not found.`);
+        }
+
+        return warehouse;
+    }
 }

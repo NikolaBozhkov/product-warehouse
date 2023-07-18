@@ -10,26 +10,27 @@ app.get('/', (req, res) => {
     res.send('Heylo');
 });
 
-app.get('/warehouses/:id/stock-amount', async (req, res) => {
+async function getStockAmountForWarehouse(id) {
     const result = await dbClient.query(`
-    SELECT SUM(p.size_per_unit*pw.amount) AS stock_amount FROM products p
+    SELECT COALESCE(SUM(p.size_per_unit*pw.amount), 0) AS stock_amount FROM products p
     INNER JOIN product_warehouses pw
         ON pw.product_id = p.id
     WHERE pw.warehouse_id = $1;`,
-        [req.params.id]);
+        [id]);
+    return result.rows[0].stock_amount;
+}
 
-    return res.send(result.rows[0].stock_amount);
+app.get('/warehouses/:id/stock-amount', async (req, res) => {
+    const stockAmount = await getStockAmountForWarehouse(req.params.id);
+    return res.send(stockAmount.toString());
 });
 
 app.get('/warehouses/:id/free-space', async (req, res) => {
-    const result = await dbClient.query(`
-    SELECT SUM(p.size_per_unit*pw.amount) AS stock_amount FROM products p
-    INNER JOIN product_warehouses pw
-        ON pw.product_id = p.id
-    WHERE pw.warehouse_id = $1;`,
-        [req.params.id]);
+    let warehouseSize = await dbClient.query(`SELECT size FROM warehouses WHERE id = $1`, [req.params.id]);
+    warehouseSize = +warehouseSize.rows[0].size;
+    const stockAmount = await getStockAmountForWarehouse(req.params.id);
 
-    return res.send(result.rows[0].stock_amount);
+    return res.send((warehouseSize - stockAmount).toString());
 });
 
 app.get('/warehouses/stock-amount', async (req, res) => {
@@ -48,7 +49,7 @@ app.get('/warehouses/combined-stock-amount', async (req, res) => {
     INNER JOIN product_warehouses pw
         ON pw.product_id = p.id;`);
 
-    return res.send(result.rows[0].stock_amount);
+    return res.send(result.rows[0].stock_amount || '0');
 });
 
 app.listen(8081, () => {

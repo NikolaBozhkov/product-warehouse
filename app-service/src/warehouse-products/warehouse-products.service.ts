@@ -11,7 +11,7 @@ export class WarehouseProductsService {
         return result.rows;
     }
 
-    async getProductsByWarehouseId(warehouseId: string): Promise<WarehouseProduct[]> {
+    async getProductsByWarehouseId(warehouseId: number): Promise<WarehouseProduct[]> {
         const result = await this.dbClient.query(`
         SELECT product_id AS "productId", warehouse_id AS "warehouseId", amount FROM product_warehouses
         WHERE warehouse_id = $1`,

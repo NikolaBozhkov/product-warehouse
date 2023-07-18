@@ -20,7 +20,7 @@ export class ProductsService {
         return result.rows[0];
     }
 
-    async updateProduct(id: string, name?: string, isHazardous?: boolean, sizePerUnit?: number): Promise<Product> {
+    async updateProduct(id: number, name?: string, isHazardous?: boolean, sizePerUnit?: number): Promise<Product> {
         let updates: { [key: string]: any }[] = [
             { name },
             { is_hazardous: isHazardous },
@@ -44,7 +44,7 @@ export class ProductsService {
         return result.rows[0];
     }
 
-    async deleteProduct(id: string): Promise<Product> {
+    async deleteProduct(id: number): Promise<Product> {
         const result = await this.dbClient.query(`
         DELETE FROM products
         WHERE id = $1
@@ -54,7 +54,7 @@ export class ProductsService {
         return result.rows[0];
     }
 
-    async getProductsByIds(ids: string[]): Promise<Product[]> {
+    async getProductsByIds(ids: number[]): Promise<Product[]> {
         const result = await this.dbClient.query(`
         SELECT id, name, is_hazardous AS "isHazardous", size_per_unit AS "sizePerUnit" FROM products
         WHERE id IN (${ids.map((_, i) => `$${i + 1}`).join(',')})`,

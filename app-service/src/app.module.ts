@@ -5,7 +5,6 @@ import { DbClient } from './db.js';
 import { ProductsModule } from './products/products.module.js';
 import { WarehousesModule } from './warehouses/warehouses.module.js';
 import { WarehouseProductsModule } from './warehouse-products/warehouse-products.module.js';
-import { CalculationsModule } from './calculations.module.js';
 
 @Module({
   imports: [

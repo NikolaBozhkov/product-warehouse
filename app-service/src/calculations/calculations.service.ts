@@ -6,7 +6,7 @@ import { map } from 'rxjs';
 export class CalculationsService {
     constructor(private readonly httpService: HttpService) {}
 
-    async getWarehouseStockAmount(warehouseId: string) {
+    async getWarehouseStockAmount(warehouseId: number) {
         return this.httpService
             .get(`http://localhost:8081/warehouses/${warehouseId}/stock-amount`)
             .pipe(
@@ -22,7 +22,7 @@ export class CalculationsService {
             );
     }
 
-    async getWarehouseFreeSpace(warehouseId: string) {
+    async getWarehouseFreeSpace(warehouseId: number) {
         return this.httpService
             .get(`http://localhost:8081/warehouses/${warehouseId}/free-space`)
             .pipe(

@@ -25,7 +25,7 @@ export class ProductsResolver {
 
     @Mutation(() => Product)
     async updateProduct(
-        @Args('id', { type: () => ID }) id: string,
+        @Args('id', { type: () => ID }) id: number,
         @Args('name', { nullable: true }) name?: string,
         @Args('isHazardous', { nullable: true }) isHazardous?: boolean,
         @Args('sizePerUnit', { nullable: true, type: () => Int }) sizePerUnit?: number,
@@ -35,7 +35,7 @@ export class ProductsResolver {
 
     @Mutation(() => Product)
     async deleteProduct(
-        @Args('id', { type: () => ID }) id: string,
+        @Args('id', { type: () => ID }) id: number,
     ) {
        return this.productsService.deleteProduct(id);
     }

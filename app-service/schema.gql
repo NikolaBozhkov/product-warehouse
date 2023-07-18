@@ -4,7 +4,7 @@
 
 """product"""
 type Product {
-  id: ID!
+  id: Int!
   name: String!
   isHazardous: Boolean!
   sizePerUnit: Int!
@@ -12,14 +12,14 @@ type Product {
 
 """warehouse-product"""
 type WarehouseProduct {
-  productId: ID!
-  warehouseId: ID!
+  productId: Int!
+  warehouseId: Int!
   amount: Int!
 }
 
 """warehouse"""
 type Warehouse {
-  id: ID!
+  id: Int!
   size: Int!
   warehouseProducts: [WarehouseProduct!]!
   stockAmount: Int!
@@ -34,12 +34,13 @@ type Query {
 
 type Mutation {
   import(toId: ID!, products: [ImportProductInput!]!, fromId: ID): [WarehouseProduct!]!
+  export(fromId: Int!, products: [ImportProductInput!]!, toId: ID): [WarehouseProduct!]!
   createProduct(name: String!, isHazardous: Boolean!, sizePerUnit: Int!): Product!
   updateProduct(id: ID!, name: String, isHazardous: Boolean, sizePerUnit: Int): Product!
   deleteProduct(id: ID!): Product!
 }
 
 input ImportProductInput {
-  productId: ID!
+  productId: Int!
   amount: Int!
 }

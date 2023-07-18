@@ -3,7 +3,7 @@ import { WarehousesResolver } from './warehouses.resolver.js';
 import { WarehousesService } from './warehouses.service.js';
 import { DbClient } from '../db.js';
 import { WarehouseProductsService } from '../warehouse-products/warehouse-products.service.js';
-import { CalculationsService } from '../calculations.service.js';
+import { CalculationsService } from '../calculations/calculations.service.js';
 import { HttpModule } from '@nestjs/axios';
 import { ProductsService } from '../products/products.service.js';
 

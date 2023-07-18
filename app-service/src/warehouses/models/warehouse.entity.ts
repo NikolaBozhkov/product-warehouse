@@ -1,4 +1,4 @@
 export interface WarehouseEntity {
-    id: string;
+    id: number;
     size: number;
 }
