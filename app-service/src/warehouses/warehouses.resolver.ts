@@ -4,11 +4,12 @@ import { Warehouse } from './models/warehouse.model.js';
 import { WarehousesService } from './warehouses.service.js';
 import { WarehouseProductsService } from '../warehouse-products/warehouse-products.service.js';
 import { CalculationsService } from '../calculations/calculations.service.js';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, from } from 'rxjs';
 import { WarehouseProduct } from '../warehouse-products/models/warehouse-product.model.js';
 import { ImportProductInput } from './inputs/ImportProductInput.js';
 import { ProductsService } from '../products/products.service.js';
 import { WarehouseEntity } from './models/warehouse.entity.js';
+import { HazardousState } from './models/hazardous-state.js';
 
 @Resolver(of => Warehouse)
 export class WarehousesResolver {
@@ -54,6 +55,10 @@ export class WarehousesResolver {
         @Args('products', { type: () => [ImportProductInput] }) products: ImportProductInput[],
         @Args('fromId', { type: () => ID, nullable: true }) fromId?: number,
     ) {
+        if (products.length === 0) {
+            throw new BadRequestException('No products provided.');
+        }
+
         const warehouseTarget = await this.getValidatedWarehouse(toId);
 
         const productsMap = products.reduce<Record<string, ImportProductInput>>((map, product) => {
@@ -64,6 +69,24 @@ export class WarehousesResolver {
         const productEntities = await this.productsService.getProductsByIds(products.map(p => p.productId));
         if (productEntities.length !== products.length) {
             throw new NotFoundException(`Some products cannot be found.`);
+        }
+
+        const firstIsHazardous = productEntities[0].isHazardous;
+        for (let product of productEntities) {
+            if (product.isHazardous !== firstIsHazardous) {
+                throw new BadRequestException(`Products differ in hazardous state.`);
+            }
+        }
+
+        if (firstIsHazardous && warehouseTarget.hazardousState === HazardousState.NonHazardous) {
+            throw new BadRequestException(`Hazardous products cannot be imported in a waarehouse that contains non-hazardous products.`);
+        } else if (!firstIsHazardous && warehouseTarget.hazardousState === HazardousState.Hazardous) {
+            throw new BadRequestException(`Non-hazardous products cannot be imported in a waarehouse that contains hazardous products.`);
+        } else if (warehouseTarget.hazardousState === HazardousState.Neutral) {
+            // Empty warehouse, update hazardous state to match products
+            await this.warehousesService.updateHazardousState(
+                firstIsHazardous ? HazardousState.Hazardous : HazardousState.NonHazardous,
+                [warehouseTarget.id]);
         }
 
         const requiredSpace = productEntities.reduce((space, product) => {
@@ -102,7 +125,13 @@ export class WarehousesResolver {
             }
         }
 
-        return this.warehousesService.export(fromId, products, toId);
+        const stockLeft = await this.warehousesService.export(fromId, products, toId);
+        const productsLeft = await this.warehouseProductsService.getProductsByWarehouseId(fromId);
+        if (productsLeft.length === 0) {
+            await this.warehousesService.updateHazardousState(HazardousState.Neutral, [fromId]);
+        }
+
+        return stockLeft;
     }
 
     private async getValidatedWarehouse(id: number): Promise<WarehouseEntity> {

@@ -39,10 +39,10 @@ export class WarehousesService {
         const result = await this.dbClient.query(`
         UPDATE product_warehouses AS pw
         SET
-	        amount = pw.amount - exported.amount::INTEGER
+	        amount = pw.amount - exported.amount::int
         FROM (VALUES ${valuesQuery}) AS exported(product_id, warehouse_id, amount)
-        WHERE pw.product_id = exported.product_id::INTEGER
-	        AND pw.warehouse_id = exported.warehouse_id::INTEGER
+        WHERE pw.product_id = exported.product_id::int
+	        AND pw.warehouse_id = exported.warehouse_id::int
         RETURNING pw.product_id AS "productId", pw.warehouse_id AS "warehouseId", pw.amount;`,
             values);
 

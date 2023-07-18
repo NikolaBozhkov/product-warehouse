@@ -50,6 +50,7 @@ export class ProductsResolver {
                     `Warehouses with ids (${incompatibleWarehouses.map(w => w.warehouseId).join(', ')}) that contain product with id ${id} also contain other ${product.isHazardous ? 'hazardous' : 'non-hazardous'} products.`);
             }
 
+            // Update all warehouses where the product is solely present
             await this.warehousesService.updateHazardousState(
                 isHazardous ? HazardousState.Hazardous : HazardousState.NonHazardous,
                 productWarehouses.map(w => w.warehouseId));
