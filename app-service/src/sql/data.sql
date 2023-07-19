@@ -7,12 +7,12 @@ VALUES
     ('p4', TRUE, 3);
 
 INSERT INTO
-    warehouses ("size", "hazardous_state")
+    warehouses ("size", "hazardous_state", "stock_amount")
 VALUES
-    (100, 'non-hazardous'),
-    (100, 'non-hazardous'),
-    (100, 'hazardous'),
-    (100, 'neutral');
+    (100, 'non-hazardous', 19),
+    (100, 'non-hazardous', 30),
+    (100, 'hazardous', 31),
+    (100, 'neutral', 0);
 
 INSERT INTO
     product_warehouses ("product_id", "warehouse_id", "amount")

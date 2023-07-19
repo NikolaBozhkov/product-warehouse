@@ -1,6 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
-import { map } from 'rxjs';
+import { firstValueFrom, map } from 'rxjs';
+import { ProductAmount } from 'src/products/models/product-amount.js';
 
 @Injectable()
 export class CalculationsService {
@@ -28,5 +29,17 @@ export class CalculationsService {
             .pipe(
                 map((res) => +res.data),
             );
+    }
+
+    async getRequiredSpace(products: ProductAmount[]) {
+        return await firstValueFrom(this.httpService
+            .post(`http://localhost:8081/products/calculate-space`, {
+                products,
+            }, {
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .pipe(
+                map((res) => +res.data),
+        ));
     }
 }

@@ -4,4 +4,6 @@ export interface WarehouseEntity {
     id: number;
     size: number;
     hazardousState: HazardousState;
+    stockAmount: number;
+    freeSpace: number;
 }

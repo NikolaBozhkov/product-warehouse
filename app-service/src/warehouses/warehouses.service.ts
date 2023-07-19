@@ -9,16 +9,20 @@ export class WarehousesService {
     constructor(private readonly dbClient: DbClient) { }
 
     async getWarehouses(): Promise<WarehouseEntity[]> {
-        const result = await this.dbClient.query<WarehouseEntity>('SELECT id, size, hazardous_state AS "hazardousState" FROM warehouses');
+        const result = await this.dbClient.query<WarehouseEntity>(
+            'SELECT id, size, hazardous_state AS "hazardousState", stock_amount AS "stockAmount", size - stock_amount AS "freeSpace" FROM warehouses');
         return result.rows;
     }
 
     async getWarehouse(id: number): Promise<WarehouseEntity> {
-        const result = await this.dbClient.query<WarehouseEntity>('SELECT id, size, hazardous_state AS "hazardousState" FROM warehouses WHERE id = $1', [id]);
+        const result = await this.dbClient.query<WarehouseEntity>(`
+        SELECT id, size, hazardous_state AS "hazardousState", stock_amount AS "stockAmount", size - stock_amount AS "freeSpace"
+        FROM warehouses WHERE id = $1`,
+            [id]);
         return result.rows[0];
     }
 
-    async import(toId: number, products: ImportProductInput[], fromId?: number) {
+    async import(toId: number, products: ImportProductInput[], requiredSpace: number, fromId?: number) {
         const { valuesQuery, values } = this.buildValuesForImportExport(products, toId);
 
         const result = await this.dbClient.query(`
@@ -30,10 +34,16 @@ export class WarehousesService {
         RETURNING product_id AS "productId", warehouse_id AS "warehouseId", amount;`,
             values);
 
+        await this.dbClient.query(`
+        UPDATE warehouses w
+        SET stock_amount = w.stock_amount + $1
+        WHERE w.id = $2;`,
+            [requiredSpace, toId]);
+
         return result.rows;
     }
 
-    async export(fromId: number, products: ImportProductInput[], toId?: number) {
+    async export(fromId: number, products: ImportProductInput[], freedSpace: number, toId?: number) {
         const { valuesQuery, values } = this.buildValuesForImportExport(products, fromId);
 
         const result = await this.dbClient.query(`
@@ -47,6 +57,12 @@ export class WarehousesService {
             values);
 
         await this.dbClient.query(`DELETE FROM product_warehouses WHERE amount = 0;`);
+
+        await this.dbClient.query(`
+        UPDATE warehouses w
+        SET stock_amount = w.stock_amount - $1
+        WHERE w.id = $2;`,
+            [freedSpace, fromId]);
 
         return result.rows;
     }

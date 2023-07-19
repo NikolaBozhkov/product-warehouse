@@ -1,14 +1,12 @@
 import 'dotenv/config';
 import express from 'express';
+import bodyParser from 'body-parser';
 import { DbClient } from './db.js';
 
-
 const app = express();
-const dbClient = new DbClient();
+app.use(bodyParser.json());
 
-app.get('/', (req, res) => {
-    res.send('Heylo');
-});
+const dbClient = new DbClient();
 
 async function getStockAmountForWarehouse(id) {
     const result = await dbClient.query(`
@@ -52,6 +50,16 @@ app.get('/warehouses/combined-stock-amount', async (req, res) => {
     return res.send(result.rows[0].stock_amount || '0');
 });
 
+app.post('/products/calculate-space', async (req, res) => {
+    const products = req.body.products;
+    const space = products.reduce((result, product) => {
+        result += product.sizePerUnit * product.amount;
+        return result;
+    }, 0);
+
+    return res.send(space.toString());
+});
+
 app.listen(8081, () => {
-    console.log(`[server]: Server is running at http://localhost:8081`);
+    console.log(`Server is running at http://localhost:8081`);
 });

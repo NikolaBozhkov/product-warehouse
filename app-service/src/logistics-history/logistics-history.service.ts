@@ -22,22 +22,6 @@ export class LogisticsHistoryService {
 
         const values = filters.map(u => Object.values(u)[0]);
 
-        // Amazing query building
-        // let whereQuery = `WHERE `;
-        // let valueIndex = 1;
-        // if (warehouseId) {
-        //     whereQuery += `warehouse_id = $${valueIndex}`;
-
-        //     if (date) {
-        //         whereQuery += ' AND ';
-        //         valueIndex += 1;
-        //     }
-        // }
-
-        // if (date) {
-        //     whereQuery += `date = $${valueIndex}`;
-        // }
-
         const result = await this.dbClient.query<LogisticsHistoryRecord>(`
         SELECT id, warehouse_id AS "warehouseId", date, type FROM warehouses_logistics_history
         ${filters.length !== 0 ? whereQuery : ''};`,

@@ -12,6 +12,8 @@ import { WarehouseEntity } from './models/warehouse.entity.js';
 import { HazardousState } from './models/hazardous-state.js';
 import { LogisticsHistoryService } from '../logistics-history/logistics-history.service.js';
 import { LogisticsType } from '../logistics-history/models/logistics-type.js';
+import { ProductAmount } from 'src/products/models/product-amount.js';
+import { Product } from 'src/products/models/product.model.js';
 
 @Resolver(of => Warehouse)
 export class WarehousesResolver {
@@ -41,15 +43,8 @@ export class WarehousesResolver {
     }
 
     @ResolveField()
-    async stockAmount(@Parent() warehouse: Warehouse) {
-        const { id: warehouseId } = warehouse;
-        return this.calculationsService.getWarehouseStockAmount(warehouseId);
-    }
-
-    @ResolveField()
     async freeSpace(@Parent() warehouse: Warehouse) {
-        const stockAmount = await firstValueFrom(await this.stockAmount(warehouse));
-        return warehouse.size - stockAmount;
+        return warehouse.size - warehouse.stockAmount;
     }
 
     @Mutation(() => [WarehouseProduct])
@@ -63,11 +58,6 @@ export class WarehousesResolver {
         }
 
         const warehouseTarget = await this.getValidatedWarehouse(toId);
-
-        const productsMap = products.reduce<Record<string, ImportProductInput>>((map, product) => {
-            map[product.productId] = product;
-            return map;
-        }, {});
 
         const productEntities = await this.productsService.getProductsByIds(products.map(p => p.productId));
         if (productEntities.length !== products.length) {
@@ -92,17 +82,14 @@ export class WarehousesResolver {
                 [warehouseTarget.id]);
         }
 
-        const requiredSpace = productEntities.reduce((space, product) => {
-            space += product.sizePerUnit * productsMap[product.id].amount;
-            return space;
-        }, 0);
+        const requiredSpace = await this.calculationsService.getRequiredSpace(this.mapProductAmounts(products, productEntities));
 
-        const freeSpace = await firstValueFrom(await this.calculationsService.getWarehouseFreeSpace(warehouseTarget.id));
-        if (requiredSpace > freeSpace) {
-            throw new BadRequestException(`The target warehouse doesn't have enough free space. Required: ${requiredSpace}, Available: ${freeSpace}`);
+        if (requiredSpace > warehouseTarget.freeSpace) {
+            throw new BadRequestException(
+                `The target warehouse doesn't have enough free space. Required: ${requiredSpace}, Available: ${warehouseTarget.freeSpace}`);
         }
 
-        const importedProducts = await this.warehousesService.import(toId, products, fromId);
+        const importedProducts = await this.warehousesService.import(toId, products, requiredSpace, fromId);
 
         await this.logisticsHistoryService.recordOperation(warehouseTarget.id, LogisticsType.Import, products);
 
@@ -132,7 +119,10 @@ export class WarehousesResolver {
             }
         }
 
-        const stockLeft = await this.warehousesService.export(fromId, products, toId);
+        const productEntities = await this.productsService.getProductsByIds(products.map(p => p.productId));
+        const freedSpace = await this.calculationsService.getRequiredSpace(this.mapProductAmounts(products, productEntities));
+
+        const stockLeft = await this.warehousesService.export(fromId, products, freedSpace, toId);
         const productsLeft = await this.warehouseProductsService.getProductsByWarehouseId(fromId);
         if (productsLeft.length === 0) {
             await this.warehousesService.updateHazardousState(HazardousState.Neutral, [fromId]);
@@ -150,5 +140,20 @@ export class WarehousesResolver {
         }
 
         return warehouse;
+    }
+
+    private mapProductAmounts(products: ImportProductInput[], productEntities: Product[]) {
+        const productsMap = products.reduce<Record<string, ImportProductInput>>((map, product) => {
+            map[product.productId] = product;
+            return map;
+        }, {});
+
+        const productAmounts = productEntities.map<ProductAmount>(p => ({
+            id: p.id,
+            sizePerUnit: p.sizePerUnit,
+            amount: productsMap[p.id].amount,
+        }));
+
+        return productAmounts;
     }
 }
