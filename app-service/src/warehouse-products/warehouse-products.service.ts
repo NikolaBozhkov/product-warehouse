@@ -20,15 +20,36 @@ export class WarehouseProductsService {
     }
 
     async getProductsCountPerWarehouseContainingProduct(productId: number) {
-        const result = await this.dbClient.query<{ warehouseId: number, productsCount: number }>(`
-        SELECT id as "warehouseId", "productsCount" FROM (
-            SELECT id, COUNT(pw.product_id)::int AS "productsCount" FROM warehouses w
-            INNER JOIN product_warehouses pw
-            ON pw.warehouse_id = w.id
-            GROUP BY (w.id)
-        ) AS warehouse
+        const result = await this.dbClient.query<{
+            warehouseId: number,
+            size: number,
+            stockAmount: number,
+            distinctProductsCount: number,
+            productAmount: number,
+            sizePerUnit: number,
+        }>(`
+        SELECT
+            warehouse.id as "warehouseId",
+            size::int,
+            "stockAmount"::int,
+            "distinctProductsCount",
+            p.size_per_unit::int as "sizePerUnit",
+            pw2.amount::int AS "productAmount"
+            FROM (
+                SELECT
+                    w.id,
+                    w.size,
+                    w.stock_amount AS "stockAmount",
+                    COUNT(pw.product_id)::int AS "distinctProductsCount"
+                FROM warehouses w
+                INNER JOIN product_warehouses pw
+                ON pw.warehouse_id = w.id
+                GROUP BY (w.id)
+            ) AS warehouse
         INNER JOIN product_warehouses pw2
         ON pw2.warehouse_id = warehouse.id
+        INNER JOIN products p
+        ON p.id = pw2.product_id
         WHERE pw2.product_id = $1;`,
             [productId]);
 

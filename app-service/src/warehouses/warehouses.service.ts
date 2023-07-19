@@ -78,6 +78,28 @@ export class WarehousesService {
         return result.rows;
     }
 
+    async updateStockAmounts(warehouseStockAmounts: Record<number, number>) {
+        const warehouseIds = Object.keys(warehouseStockAmounts);
+
+        let valuesQuery = '';
+        for (var i = 1; i < warehouseIds.length + 2; i += 2) {
+            valuesQuery += `${i !== 1 ? ',' : ''}($${i}, $${i + 1}, 0, 'neutral')`;
+        }
+
+        let values = warehouseIds.reduce<any[]>((values, id) => {
+            return values.concat([id, warehouseStockAmounts[id]]);
+        }, []);
+
+        const result = await this.dbClient.query(`
+        INSERT INTO warehouses (id, stock_amount, size, hazardous_state)
+        VALUES ${valuesQuery}
+        ON CONFLICT(id) DO UPDATE
+        SET stock_amount = EXCLUDED.stock_amount;`,
+            values);
+
+        return result.rows;
+    }
+
     private buildValuesForImportExport(products: ImportProductInput[], warehouseId: number): { valuesQuery: string, values: any[] } {
         let valuesQuery = '';
         for (var i = 2; i <= products.length + 2; i += 2) {

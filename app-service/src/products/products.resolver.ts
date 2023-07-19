@@ -41,10 +41,25 @@ export class ProductsResolver {
             throw new NotFoundException(`Product with id ${id} cannnot be found.`);
         }
 
+        const productWarehouses = await this.warehouseProductsService.getProductsCountPerWarehouseContainingProduct(id);
+
+        // Size per unit validation
+        const warehouseStockAmounts: Record<number, number> = {};
+        if (sizePerUnit !== undefined) {
+            for (let productWarehouse of productWarehouses) {
+                const sizeDiff = productWarehouse.productAmount * (sizePerUnit - productWarehouse.sizePerUnit);
+                warehouseStockAmounts[productWarehouse.warehouseId] = sizeDiff + productWarehouse.stockAmount;
+
+                if (warehouseStockAmounts[productWarehouse.warehouseId] > productWarehouse.size) {
+                    throw new BadRequestException(
+                        `The size per unit cannot be changed because warehouse with id ${productWarehouse.warehouseId} containing the product doesn't have enough capacity.`);
+                }
+            }
+        }
+
         // Hazardous validation
         if (isHazardous !== undefined && product.isHazardous !== isHazardous) {
-            const productWarehouses = await this.warehouseProductsService.getProductsCountPerWarehouseContainingProduct(id);
-            const incompatibleWarehouses = productWarehouses.filter(w => w.productsCount !== 1);
+            const incompatibleWarehouses = productWarehouses.filter(w => w.distinctProductsCount !== 1);
             if (incompatibleWarehouses.length > 0) {
                 throw new BadRequestException(
                     `Warehouses with ids (${incompatibleWarehouses.map(w => w.warehouseId).join(', ')}) that contain product with id ${id} also contain other ${product.isHazardous ? 'hazardous' : 'non-hazardous'} products.`);
@@ -57,6 +72,9 @@ export class ProductsResolver {
         }
 
         const updatedProduct = await this.productsService.updateProduct(id, name, isHazardous, sizePerUnit);
+
+        await this.warehousesService.updateStockAmounts(warehouseStockAmounts);
+
         return updatedProduct || product;
     }
 
