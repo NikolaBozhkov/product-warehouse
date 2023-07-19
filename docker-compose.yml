@@ -9,13 +9,28 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
-  app:
+  app-service:
     build:
-      context: .
+      context: ./app-service
       dockerfile: Dockerfile
     restart: always
     ports:
       - '8080:8080'
+    depends_on:
+      - db
+    environment:
+      DB_USER: postgres
+      DB_HOST: db
+      DB_NAME: postgres
+      DB_PASSWORD: postgres
+      DB_PORT: 5432
+  calculations-service:
+    build:
+      context: ./calculations-service
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - '8081:8081'
     depends_on:
       - db
     environment:

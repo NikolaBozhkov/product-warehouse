@@ -1,7 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { firstValueFrom, map } from 'rxjs';
-import { ProductAmount } from 'src/products/models/product-amount.js';
+import { ProductAmount } from '../products/models/product-amount.js';
 
 @Injectable()
 export class CalculationsService {

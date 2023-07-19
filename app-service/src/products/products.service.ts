@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DbClient } from '../db.js';
 import { Product } from './models/product.model.js';
-import { WarehouseProductsService } from 'src/warehouse-products/warehouse-products.service.js';
 
 @Injectable()
 export class ProductsService {

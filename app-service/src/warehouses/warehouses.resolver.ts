@@ -4,7 +4,6 @@ import { Warehouse } from './models/warehouse.model.js';
 import { WarehousesService } from './warehouses.service.js';
 import { WarehouseProductsService } from '../warehouse-products/warehouse-products.service.js';
 import { CalculationsService } from '../calculations/calculations.service.js';
-import { firstValueFrom, from } from 'rxjs';
 import { WarehouseProduct } from '../warehouse-products/models/warehouse-product.model.js';
 import { ImportProductInput } from './inputs/ImportProductInput.js';
 import { ProductsService } from '../products/products.service.js';
@@ -12,8 +11,8 @@ import { WarehouseEntity } from './models/warehouse.entity.js';
 import { HazardousState } from './models/hazardous-state.js';
 import { LogisticsHistoryService } from '../logistics-history/logistics-history.service.js';
 import { LogisticsType } from '../logistics-history/models/logistics-type.js';
-import { ProductAmount } from 'src/products/models/product-amount.js';
-import { Product } from 'src/products/models/product.model.js';
+import { ProductAmount } from '../products/models/product-amount.js';
+import { Product } from '../products/models/product.model.js';
 
 @Resolver(of => Warehouse)
 export class WarehousesResolver {
